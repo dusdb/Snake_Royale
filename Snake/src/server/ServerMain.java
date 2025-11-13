@@ -1,4 +1,4 @@
-package Server;
+package server;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -10,7 +10,7 @@ import java.net.Socket;
 import java.util.Vector;
 
 // 지렁이 게임 메인 서버
-public class Server_main {
+public class ServerMain {
 
     private ServerSocket serverSocket;
     private int port = 5000; // 서버 포트
@@ -62,7 +62,7 @@ public class Server_main {
 
     // 메인 메소드
     public static void main(String[] args) {
-        Server_main server = new Server_main();
+    		ServerMain server = new ServerMain();
         server.startServer();
     }
 }
@@ -71,14 +71,14 @@ public class Server_main {
 class ClientHandler extends Thread {
     
     private Socket socket;          
-    private Server_main server;     
+    private ServerMain server;     
 
     private BufferedReader in;
     private PrintWriter out;
 
     private String clientName = "Unknown";
 
-    public ClientHandler(Socket socket, Server_main server) {
+    public ClientHandler(Socket socket, ServerMain server) {
         this.socket = socket;
         this.server = server;
         try {
