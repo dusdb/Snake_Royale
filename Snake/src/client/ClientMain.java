@@ -10,7 +10,7 @@ public class ClientMain extends JFrame {
 
     public ClientMain() {
         setTitle("Snake Royale");
-        setSize(800, 600);  // 시작 화면은 나중에 450x650로 바꿔도 됨
+        setSize(1200, 800);  // 시작 화면은 나중에 450x650로 바꿔도 됨
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setResizable(false);

@@ -10,7 +10,7 @@ public class GameState {
     public boolean gameOver;    // 게임 종료 여부
     public String winnerName;   // 승자 이름
 
-    // 🆕 추가된 필드
+    // 추가된 필드
     public List<String> rankList = new ArrayList<>();       // 현재 순위 리스트
     public List<String> systemMessages = new ArrayList<>(); // 서버에서 전송하는 시스템 메시지
 }

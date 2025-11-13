@@ -23,15 +23,15 @@ public class GamePanel extends JPanel implements GameStateListener {
         setLayout(new BorderLayout());
         setBackground(Color.BLACK);
 
-        // 🎮 게임 영역
+        // 게임 영역
         GameCanvas canvas = new GameCanvas();
         add(canvas, BorderLayout.CENTER);
 
-        // 📋 사이드 영역
+        // 사이드 영역
         sidePanel = new SidePanel(frame, myName);
         add(sidePanel, BorderLayout.EAST);
 
-        // 🧠 서버 상태 업데이트 등록
+        // 서버 상태 업데이트 등록
         networkClient.addListener(this);
 
         // 방향키 입력을 서버로 전송
@@ -67,7 +67,7 @@ public class GamePanel extends JPanel implements GameStateListener {
         }
     }
 
-    // 🟩 실제 게임 화면
+    // 실제 게임 화면
     class GameCanvas extends JPanel {
         GameCanvas() {
             setPreferredSize(new Dimension(600, 600));
@@ -79,11 +79,11 @@ public class GamePanel extends JPanel implements GameStateListener {
             super.paintComponent(g);
             if (gameState == null) return;
 
-            // 🍎 사과
+            // 사과
             g.setColor(Color.RED);
             g.fillOval(gameState.appleX, gameState.appleY, 20, 20);
 
-            // 🐍 뱀
+            // 뱀
             if (gameState.snakes != null) {
                 for (SnakeInfo s : gameState.snakes) {
                     g.setColor(s.color);
@@ -93,7 +93,7 @@ public class GamePanel extends JPanel implements GameStateListener {
                 }
             }
 
-            // 💀 게임 오버
+            // 게임 오버
             if (gameState.gameOver) {
                 g.setColor(Color.RED);
                 g.setFont(new Font("SansSerif", Font.BOLD, 40));
@@ -104,67 +104,85 @@ public class GamePanel extends JPanel implements GameStateListener {
         }
     }
 
-    // 📋 오른쪽 패널 (순위 + 나가기 + 시스템 메시지 로그)
+    // 오른쪽 패널 (순위 + 나가기 + 시스템 메시지 로그)
     static class SidePanel extends JPanel {
 
         private final DefaultListModel<String> rankModel;
         private final JTextArea systemLog;
 
         public SidePanel(ClientMain frame, String playerName) {
+
             setPreferredSize(new Dimension(220, 600));
             setBackground(Color.BLACK);
             setLayout(new GridBagLayout());
-            setBorder(new LineBorder(new Color(0, 255, 128), 1));
+            setBorder(new LineBorder(new Color(0, 255, 128), 2));
 
             GridBagConstraints gbc = new GridBagConstraints();
-            gbc.insets = new Insets(10, 5, 10, 5);
-            gbc.fill = GridBagConstraints.BOTH;
             gbc.gridx = 0;
+            gbc.weightx = 1.0;              
+            gbc.fill = GridBagConstraints.HORIZONTAL;
+            gbc.insets = new Insets(10, 10, 10, 10);
 
-            // 🏆 순위표
+            // 1) 순위 제목
             JLabel rankLabel = new JLabel("순위", SwingConstants.CENTER);
             rankLabel.setForeground(Color.WHITE);
             rankLabel.setFont(new Font("SansSerif", Font.BOLD, 16));
+
             gbc.gridy = 0;
-            gbc.weighty = 0.05;
+            gbc.weighty = 0;
             add(rankLabel, gbc);
 
+            // 2) 순위 리스트
             rankModel = new DefaultListModel<>();
             JList<String> rankList = new JList<>(rankModel);
             rankList.setBackground(Color.BLACK);
             rankList.setForeground(Color.WHITE);
-            rankList.setBorder(new LineBorder(new Color(0, 255, 128), 1));
+            rankList.setFont(new Font("SansSerif", Font.PLAIN, 13));
+
+            JScrollPane rankScroll = new JScrollPane(rankList);
+            rankScroll.setBorder(new LineBorder(new Color(0, 255, 128), 1));
+
             gbc.gridy = 1;
-            gbc.weighty = 0.15;
-            add(new JScrollPane(rankList), gbc);
+            gbc.weighty = 0.25;            
+            gbc.fill = GridBagConstraints.BOTH;
+            add(rankScroll, gbc);
 
-            // 🚪 나가기 버튼
-            JButton exitButton = new JButton("나가기");
-            exitButton.setBackground(new Color(255, 70, 70));
-            exitButton.setForeground(Color.WHITE);
-            exitButton.setFont(new Font("SansSerif", Font.BOLD, 16));
-            exitButton.setFocusPainted(false);
-            exitButton.addActionListener(e -> {
-                frame.setContentPane(new StartPanel(frame, new NetworkClient()));
-                frame.revalidate();
-            });
-            gbc.gridy = 2;
-            gbc.weighty = 0.05;
-            add(exitButton, gbc);
-
-            // 💬 서버 시스템 로그 (읽기 전용)
+            // 3) 시스템 로그
             systemLog = new JTextArea(playerName + "님 환영합니다.\n");
             systemLog.setEditable(false);
             systemLog.setBackground(Color.BLACK);
             systemLog.setForeground(Color.WHITE);
             systemLog.setFont(new Font("SansSerif", Font.PLAIN, 13));
-            systemLog.setBorder(new LineBorder(new Color(0, 255, 128), 1));
+            systemLog.setBorder(null);
+
+            JScrollPane logScroll = new JScrollPane(systemLog);
+            logScroll.setBorder(new LineBorder(new Color(0, 255, 128), 1));
+            logScroll.getViewport().setBackground(Color.BLACK);
+
+            gbc.gridy = 2;
+            gbc.weighty = 0.65;              
+            gbc.fill = GridBagConstraints.BOTH;
+            add(logScroll, gbc);
+
+            // 4) 나가기 버튼 (가장 아래 고정)
+            JButton exitButton = new JButton("나가기");
+            exitButton.setBackground(new Color(255, 70, 70));
+            exitButton.setForeground(Color.WHITE);
+            exitButton.setFont(new Font("SansSerif", Font.BOLD, 16));
+            exitButton.setFocusPainted(false);
+
             gbc.gridy = 3;
-            gbc.weighty = 0.75;
-            add(new JScrollPane(systemLog), gbc);
+            gbc.weighty = 0;
+            gbc.fill = GridBagConstraints.HORIZONTAL;
+            add(exitButton, gbc);
+
+            exitButton.addActionListener(e -> {
+                frame.setContentPane(new StartPanel(frame, new NetworkClient()));
+                frame.revalidate();
+            });
         }
 
-        // 🔄 순위 업데이트
+        //  순위 업데이트
         public void updateRanking(List<String> names) {
             rankModel.clear();
             for (int i = 0; i < names.size(); i++) {
@@ -172,7 +190,7 @@ public class GamePanel extends JPanel implements GameStateListener {
             }
         }
 
-        // 📨 서버에서 온 시스템 메시지 추가
+        //  서버 시스템 메시지 추가
         public void appendSystemMessage(String msg) {
             SwingUtilities.invokeLater(() -> {
                 systemLog.append(msg + "\n");
@@ -180,4 +198,6 @@ public class GamePanel extends JPanel implements GameStateListener {
             });
         }
     }
+
+
 }
