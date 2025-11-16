@@ -10,8 +10,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public class GameLogic implements Runnable {
     
     // 게임 보드 크기 (GamePanel -> 600x600에 20px 단위로 그림)
-    public static final int BOARD_WIDTH = 30; // 600px / 20px
-    public static final int BOARD_HEIGHT = 30;  // 600px / 20px
+    public static final int BOARD_WIDTH = 48; // 600px / 20px
+    public static final int BOARD_HEIGHT = 38;  // 600px / 20px
     
     // 0.15초마다 게임 상태 갱신 (지렁이 속도)
     private final int TICK_RATE_MS = 150; 

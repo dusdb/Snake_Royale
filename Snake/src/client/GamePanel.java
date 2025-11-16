@@ -81,7 +81,7 @@ public class GamePanel extends JPanel implements GameStateListener {
     // ====================== 🎮 게임 화면 ====================== //
     class GameCanvas extends JPanel {
         GameCanvas() {
-            setPreferredSize(new Dimension(600, 600));
+            setPreferredSize(new Dimension(960, 760));
             setBackground(Color.BLACK);
         }
 
