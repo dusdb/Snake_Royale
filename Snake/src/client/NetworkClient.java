@@ -1,9 +1,13 @@
 package client;
 
+import java.awt.Point;
 import java.io.*;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+
+import javax.swing.SwingUtilities;
 
 public class NetworkClient {
 
@@ -60,32 +64,95 @@ public class NetworkClient {
     private void receiveLoop() {
         try {
             String line;
-            while (running && (line = in.readLine()) != null) {
-                // 서버에서 오는 메시지 타입에 따라 분기
-                // 예: STATE ... , CHAT ..., EXIT ...
-                if (line.startsWith("STATE ")) {
-                    GameState state = parseState(line.substring("STATE ".length()));
+            while ((line = in.readLine()) != null) {
+
+                System.out.println("RECV >>> " + line);  // 🔥 반드시 추가
+
+                if (line.startsWith("STATE") || line.startsWith("STATE_UPDATE")) {
+
+                    String payload = line.substring(line.indexOf(" ") + 1).trim();
+                    System.out.println("⚠ RAW STATE = " + payload);
+
+                    GameState state = parseState(payload);
                     notifyStateUpdated(state);
-                } else if (line.startsWith("CHAT ")) {
-                    // 필요하면 별도 리스너 추가
-                    System.out.println("[CHAT] " + line.substring(5));
+                }
+                else if (line.startsWith("CHAT")) {
+                    notifyChatMessage(line.substring(5));
                 }
             }
-        } catch (IOException e) {
-            System.err.println("Receive loop ended: " + e.getMessage());
-        } finally {
-            close();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
-    private GameState parseState(String payload) {
-        // TODO: 서버와 약속한 포맷대로 파싱
-        // 지금은 빈 상태 리턴 (골격만)
-    	// 서버에서 보낸 데이터를 파싱해서 GameState 필드에 채우기 위해 변환 코드 작성
-        GameState state = new GameState();
-        // 예: payload: "TICK 10|APPLE 100 200|PLAYER p1 3 100 100 ALIVE;..."
-        return state;
+    
+    private void notifyChatMessage(String msg) {
+        for (GameStateListener l : listeners) {
+            SwingUtilities.invokeLater(() -> l.onChatMessage(msg));
+        }
     }
+
+
+
+    private GameState parseState(String payload) {
+
+        GameState gs = new GameState();
+        if (payload == null || payload.isEmpty()) return gs;
+
+        String[] parts = payload.split("\\|");
+
+        /** -------------- [0]  뱀 정보 ------------------ */
+        if (parts.length > 0) {
+            String[] players = parts[0].split(";");
+
+            for (String p : players) {
+
+                if (!p.contains(":")) continue;
+
+                String name = p.substring(0, p.indexOf(":"));
+                String bodyStr = p.substring(p.indexOf(":") + 1, p.indexOf("("));
+                boolean alive = p.contains("(A)");
+
+                List<Point> body = new ArrayList<>();
+                String[] pts = bodyStr.split(",");
+
+                for (int i = 0; i < pts.length - 1; i += 2) {
+                    body.add(new Point(
+                            Integer.parseInt(pts[i]),
+                            Integer.parseInt(pts[i + 1])
+                    ));
+                }
+
+                gs.snakeBodies.put(name, body);
+                gs.snakeAlive.put(name, alive);
+            }
+        }
+
+        /** -------------- [1]  사과 정보 ------------------ */
+        if (parts.length > 1 && parts[1].startsWith("A:")) {
+            String[] xy = parts[1].substring(2).split(",");
+            gs.appleX = Integer.parseInt(xy[0]);
+            gs.appleY = Integer.parseInt(xy[1]);
+        }
+
+        /** -------------- [2]  점수 정보 ------------------ */
+        if (parts.length > 2 && parts[2].startsWith("S:")) {
+            String[] scoreData = parts[2].substring(2).split(",");
+            for (String s : scoreData) {
+                String[] kv = s.split("=");
+                if (kv.length == 2) {
+                    gs.scores.put(kv[0], Integer.parseInt(kv[1]));
+                }
+            }
+        }
+        
+        System.out.println("⚠ RAW STATE = " + payload);
+
+
+        return gs;
+    }
+
+
 
     // receiveLoop 안에서 바로 panel.repaint() 같은 걸 부르면 UI 스레드 충돌 발생 가능
     // invokeLater()로 UI 스레드로 안전하게 게임 상태를 전달하는 코드를 예약

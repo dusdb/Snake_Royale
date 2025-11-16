@@ -1,16 +1,20 @@
 package client;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.awt.*;
+import java.util.*;
 
 public class GameState {
-    public List<SnakeInfo> snakes = new ArrayList<>();  // 각 플레이어의 뱀 정보
-    public int appleX;          // 사과 X 좌표
-    public int appleY;          // 사과 Y 좌표
-    public boolean gameOver;    // 게임 종료 여부
-    public String winnerName;   // 승자 이름
 
-    // 추가된 필드
-    public List<String> rankList = new ArrayList<>();       // 현재 순위 리스트
-    public List<String> systemMessages = new ArrayList<>(); // 서버에서 전송하는 시스템 메시지
+    // 플레이어 이름 → 뱀 몸 리스트 (픽셀 좌표)
+    public Map<String, java.util.List<Point>> snakeBodies = new HashMap<>();
+
+    // 플레이어 이름 → 생존 여부
+    public Map<String, Boolean> snakeAlive = new HashMap<>();
+
+    // 플레이어 이름 → 점수
+    public Map<String, Integer> scores = new HashMap<>();
+
+    // 사과 좌표
+    public int appleX;
+    public int appleY;
 }

@@ -55,17 +55,23 @@ public class GamePanel extends JPanel implements GameStateListener {
         this.gameState = state;
         repaint();
 
-        // 서버에서 받은 순위 리스트나 메시지 반영 예시
-        if (state.rankList != null) {
-            sidePanel.updateRanking(state.rankList);
-        }
-        if (state.systemMessages != null && !state.systemMessages.isEmpty()) {
-            for (String msg : state.systemMessages) {
-                sidePanel.appendSystemMessage(msg);
-            }
-            state.systemMessages.clear(); // 중복 방지
+        // 점수 기반 순위 갱신
+        if (!state.scores.isEmpty()) {
+            List<String> ranking = state.scores.entrySet().stream()
+                    .sorted((a, b) -> b.getValue() - a.getValue())
+                    .map(e -> e.getKey() + " : " + e.getValue())
+                    .toList();
+
+            sidePanel.updateRanking(ranking);
         }
     }
+
+    @Override
+    public void onChatMessage(String msg) {
+        sidePanel.appendSystemMessage(msg);
+    }
+
+
 
     // 실제 게임 화면
     class GameCanvas extends JPanel {
@@ -77,31 +83,26 @@ public class GamePanel extends JPanel implements GameStateListener {
         @Override
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
-            if (gameState == null) return;
+
+            if (gameState.snakeBodies.isEmpty()) return;
 
             // 사과
             g.setColor(Color.RED);
             g.fillOval(gameState.appleX, gameState.appleY, 20, 20);
 
-            // 뱀
-            if (gameState.snakes != null) {
-                for (SnakeInfo s : gameState.snakes) {
-                    g.setColor(s.color);
-                    for (Point p : s.segments) {
-                        g.fillRect(p.x, p.y, 20, 20);
-                    }
+            // 모든 뱀
+            for (String name : gameState.snakeBodies.keySet()) {
+                java.util.List<Point> body = gameState.snakeBodies.get(name);
+                boolean alive = gameState.snakeAlive.get(name);
+
+                g.setColor(alive ? Color.GREEN : Color.GRAY);
+
+                for (Point p : body) {
+                    g.fillRect(p.x, p.y, 20, 20);
                 }
             }
-
-            // 게임 오버
-            if (gameState.gameOver) {
-                g.setColor(Color.RED);
-                g.setFont(new Font("SansSerif", Font.BOLD, 40));
-                String msg = "Game Over";
-                int w = g.getFontMetrics().stringWidth(msg);
-                g.drawString(msg, (getWidth() - w) / 2, getHeight() / 2);
-            }
         }
+
     }
 
     // 오른쪽 패널 (순위 + 나가기 + 시스템 메시지 로그)
