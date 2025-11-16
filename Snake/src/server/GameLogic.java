@@ -56,8 +56,8 @@ public class GameLogic implements Runnable {
 
     // 사과 생성 (랜덤)
     public synchronized void spawnApple() {
-        // 뱀 몸통과 겹치지 않는 위치에 생성하는 로직 추가하면 좋을듯
-    		// BOARD_WIDTH, BOARD_HEIGHT 안에서 랜덤하게 사과 좌표를 생성
+        // 뱀 몸통과 겹치지 않는 위치에 생성하는 로직 추가하면 좋을듯?
+    	// BOARD_WIDTH, BOARD_HEIGHT 안에서 랜덤하게 사과 좌표를 생성
         int x = rand.nextInt(BOARD_WIDTH);
         int y = rand.nextInt(BOARD_HEIGHT);
         apple = new Point(x, y); // Point 객체로 사과 위치 저장
@@ -67,7 +67,7 @@ public class GameLogic implements Runnable {
     // 방향키 받기
     // ClientHandler가 이 메소드를 호출하여 뱀의 다음 방향을 설정
     public void setDirection(String clientName, String direction) {
-    		SnakeInfo snake = snakes.get(clientName);
+    	SnakeInfo snake = snakes.get(clientName);
         if (snake != null && snake.isAlive) {
             snake.setDirection(direction);
         }
@@ -76,7 +76,7 @@ public class GameLogic implements Runnable {
     // ClientHandler가 호출하여 GameLogic에 새 플레이어를 추가
     public synchronized void addPlayer(String clientName) {
         // 새 플레이어 뱀 생성 (시작 위치: 10, 10)
-    		SnakeInfo newSnake = new SnakeInfo(clientName, 10, 10);
+    	SnakeInfo newSnake = new SnakeInfo(clientName, 10, 10);
         snakes.put(clientName, newSnake);
     }
 
