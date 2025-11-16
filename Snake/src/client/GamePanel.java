@@ -34,12 +34,13 @@ public class GamePanel extends JPanel implements GameStateListener {
         // 서버 상태 업데이트 등록
         networkClient.addListener(this);
 
-        // 방향키 입력을 서버로 전송
+        // 🔥 키 입력을 canvas가 직접 받도록 설정
         canvas.setFocusable(true);
-        canvas.requestFocusInWindow();
+
         canvas.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
+
                 switch (e.getKeyCode()) {
                     case KeyEvent.VK_UP -> networkClient.sendMove("UP");
                     case KeyEvent.VK_DOWN -> networkClient.sendMove("DOWN");
@@ -48,6 +49,12 @@ public class GamePanel extends JPanel implements GameStateListener {
                 }
             }
         });
+
+        // 🔥 매우 중요!!! → 화면이 표시된 뒤 포커스를 canvas에 강제로 줌
+        SwingUtilities.invokeLater(() -> {
+            canvas.requestFocusInWindow();
+            System.out.println("⚡ Canvas Focus Activated");
+        });
     }
 
     @Override
@@ -55,7 +62,6 @@ public class GamePanel extends JPanel implements GameStateListener {
         this.gameState = state;
         repaint();
 
-        // 점수 기반 순위 갱신
         if (!state.scores.isEmpty()) {
             List<String> ranking = state.scores.entrySet().stream()
                     .sorted((a, b) -> b.getValue() - a.getValue())
@@ -72,12 +78,18 @@ public class GamePanel extends JPanel implements GameStateListener {
     }
 
 
-
-    // 실제 게임 화면
+    // ====================== 🎮 게임 화면 ====================== //
     class GameCanvas extends JPanel {
         GameCanvas() {
             setPreferredSize(new Dimension(600, 600));
             setBackground(Color.BLACK);
+        }
+
+        // 🔥 화면 재배치 후에도 포커스를 계속 유지
+        @Override
+        public void addNotify() {
+            super.addNotify();
+            requestFocusInWindow();
         }
 
         @Override
@@ -86,11 +98,11 @@ public class GamePanel extends JPanel implements GameStateListener {
 
             if (gameState.snakeBodies.isEmpty()) return;
 
-            // 사과
+            // 🍎 사과
             g.setColor(Color.RED);
             g.fillOval(gameState.appleX, gameState.appleY, 20, 20);
 
-            // 모든 뱀
+            // 🐍 모든 뱀
             for (String name : gameState.snakeBodies.keySet()) {
                 java.util.List<Point> body = gameState.snakeBodies.get(name);
                 boolean alive = gameState.snakeAlive.get(name);
@@ -102,10 +114,10 @@ public class GamePanel extends JPanel implements GameStateListener {
                 }
             }
         }
-
     }
 
-    // 오른쪽 패널 (순위 + 나가기 + 시스템 메시지 로그)
+
+    // ====================== 📊 오른쪽 패널 ====================== //
     static class SidePanel extends JPanel {
 
         private final DefaultListModel<String> rankModel;
@@ -120,61 +132,49 @@ public class GamePanel extends JPanel implements GameStateListener {
 
             GridBagConstraints gbc = new GridBagConstraints();
             gbc.gridx = 0;
-            gbc.weightx = 1.0;              
+            gbc.weightx = 1.0;
             gbc.fill = GridBagConstraints.HORIZONTAL;
             gbc.insets = new Insets(10, 10, 10, 10);
 
-            // 1) 순위 제목
             JLabel rankLabel = new JLabel("순위", SwingConstants.CENTER);
             rankLabel.setForeground(Color.WHITE);
             rankLabel.setFont(new Font("SansSerif", Font.BOLD, 16));
 
             gbc.gridy = 0;
-            gbc.weighty = 0;
             add(rankLabel, gbc);
 
-            // 2) 순위 리스트
             rankModel = new DefaultListModel<>();
             JList<String> rankList = new JList<>(rankModel);
             rankList.setBackground(Color.BLACK);
             rankList.setForeground(Color.WHITE);
-            rankList.setFont(new Font("SansSerif", Font.PLAIN, 13));
 
             JScrollPane rankScroll = new JScrollPane(rankList);
             rankScroll.setBorder(new LineBorder(new Color(0, 255, 128), 1));
 
             gbc.gridy = 1;
-            gbc.weighty = 0.25;            
+            gbc.weighty = 0.25;
             gbc.fill = GridBagConstraints.BOTH;
             add(rankScroll, gbc);
 
-            // 3) 시스템 로그
             systemLog = new JTextArea(playerName + "님 환영합니다.\n");
             systemLog.setEditable(false);
             systemLog.setBackground(Color.BLACK);
             systemLog.setForeground(Color.WHITE);
-            systemLog.setFont(new Font("SansSerif", Font.PLAIN, 13));
-            systemLog.setBorder(null);
 
             JScrollPane logScroll = new JScrollPane(systemLog);
             logScroll.setBorder(new LineBorder(new Color(0, 255, 128), 1));
-            logScroll.getViewport().setBackground(Color.BLACK);
 
             gbc.gridy = 2;
-            gbc.weighty = 0.65;              
+            gbc.weighty = 0.65;
             gbc.fill = GridBagConstraints.BOTH;
             add(logScroll, gbc);
 
-            // 4) 나가기 버튼 (가장 아래 고정)
             JButton exitButton = new JButton("나가기");
             exitButton.setBackground(new Color(255, 70, 70));
             exitButton.setForeground(Color.WHITE);
-            exitButton.setFont(new Font("SansSerif", Font.BOLD, 16));
-            exitButton.setFocusPainted(false);
 
             gbc.gridy = 3;
             gbc.weighty = 0;
-            gbc.fill = GridBagConstraints.HORIZONTAL;
             add(exitButton, gbc);
 
             exitButton.addActionListener(e -> {
@@ -183,7 +183,6 @@ public class GamePanel extends JPanel implements GameStateListener {
             });
         }
 
-        //  순위 업데이트
         public void updateRanking(List<String> names) {
             rankModel.clear();
             for (int i = 0; i < names.size(); i++) {
@@ -191,7 +190,6 @@ public class GamePanel extends JPanel implements GameStateListener {
             }
         }
 
-        //  서버 시스템 메시지 추가
         public void appendSystemMessage(String msg) {
             SwingUtilities.invokeLater(() -> {
                 systemLog.append(msg + "\n");
@@ -199,6 +197,4 @@ public class GamePanel extends JPanel implements GameStateListener {
             });
         }
     }
-
-
 }
