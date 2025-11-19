@@ -15,9 +15,12 @@ public class NetworkClient {
     private BufferedReader in;
     private PrintWriter out;
 
+    // CopyOnWriteArrayList는 여러 스레드에서 동시에 add/remove해도 안전한 리스트
     private final List<GameStateListener> listeners = new CopyOnWriteArrayList<>();
     private volatile boolean running = false;
 
+    
+    // 네트워크 패킷을 처리해서 UI에 반영할 때, GamePanel처럼 GameState를 수신해야 하는 객체를 등록
     public void addListener(GameStateListener listener) {
         listeners.add(listener);
     }
@@ -54,20 +57,21 @@ public class NetworkClient {
         }
     }
 
-    // 추후: 채팅 전송
-    public void sendChat(String message) {
-        if (out != null) {
-            out.println("CHAT " + message);
-        }
-    }
-
+    
     private void receiveLoop() {
         try {
             String line;
             while ((line = in.readLine()) != null) {
 
-                System.out.println("RECV >>> " + line);  // 🔥 반드시 추가
+            	// 서버에서 받은 모든 텍스트를 콘솔에 출력하는 디버깅용 코드
+                System.out.println("RECV >>> " + line);  
 
+                // STATE 데이터 처리 흐름
+                // 1. 서버에서 STATE가 전송됨
+                // 2. STATE 문자열만 추출
+                // 3. parseState(payload) 호출 -> payload에서 뱀, 사과, 점수 정보를 각각 분해해서 GameState에 넣음
+                // 4. notifyStateUpdated(state) - UI 스레드에서 안전하게 실행되도록 invokeLater로 전달
+                // 5. GamePanel.onGameStateUpdated(state) - 새 상태로 UI 갱신
                 if (line.startsWith("STATE") || line.startsWith("STATE_UPDATE")) {
 
                     String payload = line.substring(line.indexOf(" ") + 1).trim();
@@ -76,6 +80,11 @@ public class NetworkClient {
                     GameState state = parseState(payload);
                     notifyStateUpdated(state);
                 }
+                // 서버 메시지 처리 흐름
+                // 1. 서버가 CHAT 메시지를 보냄
+                // 2. 클라이언트에서 수신
+                // 3. GameStateListener에 있는 onChatMessage 메서드로 모든 Listener에게 전달
+                // 4. GamePanel에서 메시지 표시
                 else if (line.startsWith("CHAT")) {
                     notifyChatMessage(line.substring(5));
                 }

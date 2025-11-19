@@ -34,7 +34,8 @@ public class GamePanel extends JPanel implements GameStateListener {
         // 서버 상태 업데이트 등록
         networkClient.addListener(this);
 
-        // 🔥 키 입력을 canvas가 직접 받도록 설정
+        // 키 입력을 canvas가 직접 받도록 설정
+        // 내부에 있는 여러 요소들이 있기 때문에 포커스를 줘서 키 입력을 포커스를 가진 컴포넌트가 받을 수 있게 함
         canvas.setFocusable(true);
 
         canvas.addKeyListener(new KeyAdapter() {
@@ -50,13 +51,19 @@ public class GamePanel extends JPanel implements GameStateListener {
             }
         });
 
-        // 🔥 매우 중요!!! → 화면이 표시된 뒤 포커스를 canvas에 강제로 줌
+        // 화면이 표시된 뒤 포커스를 canvas에 강제로 줌
+        // Swing에서는 생성자 안에서 requestFocusInWindow 호출하면 대부분 무시되기 때문에 
+        // invokeLater를 사용해서 화면 렌더링 이후에 포커스를 줌
         SwingUtilities.invokeLater(() -> {
             canvas.requestFocusInWindow();
-            System.out.println("⚡ Canvas Focus Activated");
         });
+        
+        // KeyListener 먼저 설정되고, 실제로 키 입력을 받을 수 있게 되는 건 화면이 뜬 뒤 
+        // invokeLater에서 requestFocusInWindow가 실행된 순간
     }
 
+    
+    // 서버에서 받은 점수를 내림차순으로 정렬한 뒤 닉네임:점수 형식으로 변환하여 오른쪽 순위판에 반영
     @Override
     public void onGameStateUpdated(GameState state) {
         this.gameState = state;
@@ -72,37 +79,40 @@ public class GamePanel extends JPanel implements GameStateListener {
         }
     }
 
+    
+    // 서버에서 CHAT 메시지를 받으면 오른쪽 로그창에 출력하기 위한 전달자 역할
     @Override
     public void onChatMessage(String msg) {
         sidePanel.appendSystemMessage(msg);
     }
 
 
-    // ====================== 🎮 게임 화면 ====================== //
+    // ====================== 게임 화면 ====================== //
     class GameCanvas extends JPanel {
         GameCanvas() {
             setPreferredSize(new Dimension(960, 760));
             setBackground(Color.BLACK);
         }
 
-        // 🔥 화면 재배치 후에도 포커스를 계속 유지
+        // 화면 재배치 후에도 포커스를 계속 유지
         @Override
         public void addNotify() {
             super.addNotify();
             requestFocusInWindow();
         }
 
+        // 현재 게임 상황(사과, 뱀(플레이어), 생존 여부)를 화면에 시각적으로 그림
         @Override
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
 
             if (gameState.snakeBodies.isEmpty()) return;
 
-            // 🍎 사과
+            // 사과
             g.setColor(Color.RED);
             g.fillOval(gameState.appleX, gameState.appleY, 20, 20);
 
-            // 🐍 모든 뱀
+            // 모든 뱀
             for (String name : gameState.snakeBodies.keySet()) {
                 java.util.List<Point> body = gameState.snakeBodies.get(name);
                 boolean alive = gameState.snakeAlive.get(name);
@@ -117,7 +127,7 @@ public class GamePanel extends JPanel implements GameStateListener {
     }
 
 
-    // ====================== 📊 오른쪽 패널 ====================== //
+    // ====================== 오른쪽 패널 ====================== //
     static class SidePanel extends JPanel {
 
         private final DefaultListModel<String> rankModel;
@@ -190,6 +200,8 @@ public class GamePanel extends JPanel implements GameStateListener {
             }
         }
 
+        
+        // JTextArea에 메시지를 추가하는 기능
         public void appendSystemMessage(String msg) {
             SwingUtilities.invokeLater(() -> {
                 systemLog.append(msg + "\n");

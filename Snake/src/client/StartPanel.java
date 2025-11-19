@@ -9,8 +9,8 @@ public class StartPanel extends JPanel {
     private JTextField hostField;
     private JTextField portField;
 
-    // GridBagLayout은 스윙에서 가장 유연하지만 약간 까다로운 레이아웃 매니저, GridBagConstraints는 GridBagLayout에 컴포넌트를 추가할 때 사용하는 제약조건    
-    // GridLayout만으로도 화면을 표처럼 나눌 수 있는데, 굳이 GridBagLayout + GridBagConstraints 조합을 쓴 이유는 자유도와 세밀한 제어 때문
+    // GridBagConstraints는 GridBagLayout에 컴포넌트를 추가할 때 사용하는 제약조건    
+    // GridLayout만으로도 화면을 표처럼 나눌 수 있는데, GridBagLayout + GridBagConstraints 조합을 쓴 이유는 자유도와 세밀한 제어 때문
     
     public StartPanel(ClientMain frame, NetworkClient networkClient) {
         setPreferredSize(new Dimension(450, 650));
