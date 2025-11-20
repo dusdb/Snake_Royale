@@ -88,6 +88,15 @@ public class NetworkClient {
                 else if (line.startsWith("CHAT")) {
                     notifyChatMessage(line.substring(5));
                 }
+                
+                // 서버 게임 종료 처리 흐름
+                // 1. 서버가 GAMEOVER 메시지를 보냄
+                // 2. 클라이언트에서 수신
+                // 3. GameStateListener에 있는 onGameOver 메서드로 모든 Listener에게 전달
+                // 4. GamePanel에서 GameOverPAnel로 변경
+                else if (line.startsWith("GAMEOVER")) {
+                    notifyGameOver();
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -101,6 +110,11 @@ public class NetworkClient {
         }
     }
 
+    private void notifyGameOver() {
+        for (GameStateListener l : listeners) {
+            SwingUtilities.invokeLater(l::onGameOver);
+        }
+    }
 
 
     private GameState parseState(String payload) {

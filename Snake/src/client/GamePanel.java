@@ -85,6 +85,16 @@ public class GamePanel extends JPanel implements GameStateListener {
     public void onChatMessage(String msg) {
         sidePanel.appendSystemMessage(msg);
     }
+    
+    // 서버에서 GAMEOVER 메시지를 받으면 오른쪽 로그창에 출력하기 위한 전달자 역할
+    @Override
+    public void onGameOver() {
+        SwingUtilities.invokeLater(() -> {
+            ClientMain frame = (ClientMain) SwingUtilities.getWindowAncestor(this);
+            frame.setContentPane(new GameOverPanel(frame, gameState));
+            frame.revalidate();
+        });
+    }
 
 
     // ====================== 게임 화면 ====================== //
