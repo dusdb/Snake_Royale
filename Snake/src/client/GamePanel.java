@@ -124,10 +124,13 @@ public class GamePanel extends JPanel implements GameStateListener {
 
             // 모든 뱀
             for (String name : gameState.snakeBodies.keySet()) {
-                java.util.List<Point> body = gameState.snakeBodies.get(name);
                 boolean alive = gameState.snakeAlive.get(name);
+                if (!alive) continue;
 
-                g.setColor(alive ? Color.GREEN : Color.GRAY);
+                java.util.List<Point> body = gameState.snakeBodies.get(name);
+                Color snakeColor = gameState.snakeColors.getOrDefault(name, Color.GREEN);
+                
+                g.setColor(alive ? snakeColor : Color.GRAY);
 
                 for (Point p : body) {
                     g.fillRect(p.x, p.y, 20, 20);

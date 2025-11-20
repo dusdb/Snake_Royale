@@ -13,6 +13,9 @@ public class GameState {
 
     // (플레이어 이름, 점수)
     public Map<String, Integer> scores = new HashMap<>();
+    
+    // (플레이어 이름, 색상)
+    public Map<String, Color> snakeColors = new HashMap<>();
 
     // 사과 좌표
     public int appleX;

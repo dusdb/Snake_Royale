@@ -1,5 +1,6 @@
 package client;
 
+import java.awt.Color;
 import java.awt.Point;
 import java.io.*;
 import java.net.Socket;
@@ -135,6 +136,25 @@ public class NetworkClient {
                 String name = p.substring(0, p.indexOf(":"));
                 String bodyStr = p.substring(p.indexOf(":") + 1, p.indexOf("("));
                 boolean alive = p.contains("(A)");
+                
+                
+                // 색상 파싱
+                int colorStart = p.indexOf("[");
+                int colorEnd = p.indexOf("]");
+                Color color = Color.GREEN;
+
+                if (colorStart != -1 && colorEnd != -1) {
+                    try {
+                        String[] rgb = p.substring(colorStart + 1, colorEnd).split(",");
+                        int r = Integer.parseInt(rgb[0]);
+                        int g = Integer.parseInt(rgb[1]);
+                        int b = Integer.parseInt(rgb[2]);
+                        color = new Color(r, g, b);
+                    } catch (Exception ignored) {}
+                }
+
+                gs.snakeColors.put(name, color);
+
 
                 List<Point> body = new ArrayList<>();
                 String[] pts = bodyStr.split(",");

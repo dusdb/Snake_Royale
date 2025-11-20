@@ -16,4 +16,13 @@ public class SnakeInfo {
     public int score = 0;
 
     public Color color = Color.GREEN; // 서버가 색을 보내줘도 되고, 클라가 매핑해도 됨
+    
+    public SnakeInfo(String playerName) {
+        this.playerName = playerName;
+    }
+
+    // 클라에서 색상 업데이트
+    public void setColor(Color color) {
+        this.color = color;
+    }
 }
