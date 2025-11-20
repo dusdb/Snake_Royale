@@ -1,6 +1,8 @@
 package server;
 
-import java.awt.Point; // 뱀과 사과의 좌표(x, y)를 관리하기 위해 사용합니다.
+import java.awt.Point; // 뱀과 사과의 좌표(x, y)를 관리하기 위해 사용
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
@@ -14,13 +16,14 @@ public class GameLogic implements Runnable {
     public static final int BOARD_HEIGHT = 38;  // 600px / 20px
     
     // 0.15초마다 게임 상태 갱신 (지렁이 속도)
-    private final int TICK_RATE_MS = 150; 
+    private final int TICK_RATE_MS = 50; 
 
     private ServerMain server; // broadcast를 위한 서버 참조
     private Random rand = new Random();
 
     // 여러 ClientHandler가 동시에 뱀의 방향을 바꿀 수 있기 때문에 스레드에 안전한 Map 사용
     private Map<String, SnakeInfo> snakes = new ConcurrentHashMap<>();
+    private Map<String, ClientHandler> playerHandlers = new ConcurrentHashMap<>();
     private Point apple;
 
     // 생성자: 서버의 참조를 받아 초기화
@@ -37,7 +40,7 @@ public class GameLogic implements Runnable {
             try {
                 // (선순위 규칙 반영) 모든 게임 로직(이동, 충돌, 사과) 업데이트
                 updateGame();
-                
+                              
                 // (위치 계산 후 전송) 갱신된 게임 상태를 문자열로 변환
                 String stateString = getGameStateString();
                 
@@ -53,7 +56,7 @@ public class GameLogic implements Runnable {
             }
         }
     }
-
+    
     // 사과 생성 (랜덤)
     public synchronized void spawnApple() {
         // 뱀 몸통과 겹치지 않는 위치에 생성하는 로직 추가하면 좋을듯?
@@ -74,15 +77,18 @@ public class GameLogic implements Runnable {
     }
 
     // ClientHandler가 호출하여 GameLogic에 새 플레이어를 추가
-    public synchronized void addPlayer(String clientName) {
+    public synchronized void addPlayer(String clientName, ClientHandler handler) {
         // 새 플레이어 뱀 생성 (시작 위치: 10, 10)
-    	SnakeInfo newSnake = new SnakeInfo(clientName, 10, 10);
+    		SnakeInfo newSnake = new SnakeInfo(clientName, 10, 10);
         snakes.put(clientName, newSnake);
+      
+        playerHandlers.put(clientName, handler);  
     }
 
     // ClientHandler가 호출하여 GameLogic에서 플레이어를 제거
     public synchronized void removePlayer(String clientName) {
         snakes.remove(clientName);
+        playerHandlers.remove(clientName);
     }
     
     // 우선순위 규칙 반영
@@ -90,6 +96,9 @@ public class GameLogic implements Runnable {
     // run 메소드가 주기적으로 호출하는 메인 업데이트 메소드
     private synchronized void updateGame() {
         if (snakes.isEmpty()) return; // 플레이어가 없으면 아무것도 안함
+        
+        // 이번 턴에 죽은 뱀들을 기록할 리스트 생성
+        List<String> deadSnakes = new ArrayList<>();
         
         // 1. 모든 뱀 동시 이동 (위치 계산)
         for (SnakeInfo snake : snakes.values()) {
@@ -126,6 +135,10 @@ public class GameLogic implements Runnable {
                     // 머리끼리 충돌 시 둘 다 사망
                     snake.die();
                     otherSnake.die();
+                    // 죽은 목록에 추가
+                    deadSnakes.add(snake.name);
+                    deadSnakes.add(otherSnake.name);
+                    
                     System.out.println(snake.name + "와 " + otherSnake.name + "가 머리 충돌!");
                     break; // 한 번만 처리
                 }
@@ -134,8 +147,11 @@ public class GameLogic implements Runnable {
                 if (otherSnake.checkBodyCollision(head)) {
                     // 내 머리가 다른 뱀의 몸에 충돌
                     snake.die();
+                    deadSnakes.add(snake.name); 
+                    
                     otherSnake.addKillScore(); // 점수 획득 (+5)
                     otherSnake.grow(5); // 몸 길이 증가 (+5)
+                    
                     System.out.println(snake.name + "가 " + otherSnake.name + "의 몸에 충돌!");
                     break; // 다른 뱀은 더 볼 필요 없음
                 }
@@ -146,6 +162,7 @@ public class GameLogic implements Runnable {
             // 3-2. 벽 충돌
             if (head.x < 0 || head.x >= BOARD_WIDTH || head.y < 0 || head.y >= BOARD_HEIGHT) {
                 snake.die(); // 뱀 죽음 처리
+                deadSnakes.add(snake.name);
                 System.out.println(snake.name + "가 벽에 충돌했습니다.");
                 continue;
             }
@@ -153,10 +170,24 @@ public class GameLogic implements Runnable {
             // 3-3. 자기 자신과 충돌
             if (snake.checkSelfCollision()) {
                 snake.die();
+                deadSnakes.add(snake.name);
                 System.out.println(snake.name + "가 자기 몸에 충돌했습니다.");
                 continue;
             }
         }
+        
+        // 4. 사망자 처리 및 개별 통보
+        for (String deadSnakeName : deadSnakes) {
+            
+            // [변경] ServerMain을 거치지 않고, 저장해둔 핸들러를 꺼내서 바로 전송!
+            ClientHandler handler = playerHandlers.get(deadSnakeName);
+            if (handler != null) {
+                handler.sendMessage("GAMEOVER"); // 💥 너한테만 바로 전송!
+                System.out.println(deadSnakeName + "에게 GAMEOVER 전송 완료");
+            }
+            
+            removePlayer(deadSnakeName); // 리스트에서 삭제
+        }	
     }
     
     // 위치 계산 후 전송

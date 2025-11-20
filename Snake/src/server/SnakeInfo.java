@@ -1,7 +1,9 @@
 package server;
 
+import java.awt.Color;
 import java.awt.Point;
 import java.util.LinkedList;
+import java.util.Random;
 
 // 뱀 한 마리의 데이터(위치, 방향, 점수)를 관리하는 객체 -> 개별로 추적
 // (GameLogic이 여러 뱀을 관리하는데, 그 중에서 한 마리)
@@ -11,11 +13,20 @@ public class SnakeInfo {
 	public String direction = "RIGHT"; // 현재 이동 방향 (UP, DOWN, LEFT, RIGHT)
 	public boolean isAlive = true; // 생존 여부
 	public int score = 0; // 점수
- 
-	private boolean justAte = false; // 몸 길이 증가 플래그 (사과를 먹은 직후 한번만 true -> 이동 시 꼬리 안자름 (몸길이 +1))
+	public Color color;
+
+
+	// 몸 길이 증가 플래그 (사과를 먹은 직후 한번만 true -> 이동 시 꼬리 안자름 (몸길이 +1))
+	private boolean justAte = false; 
+	
 
 	public SnakeInfo(String name, int startX, int startY) {
 		this.name = name;
+		
+		// 랜덤 색상
+	    Random r = new Random();
+	    this.color = new Color(r.nextInt(256), r.nextInt(256), r.nextInt(256));
+	    
 		// 뱀 초기화 (시작 좌표와 기본 길이 3으로 설정)
 		// LinkedList 앞이 머리 (addFirst), 뒤가 꼬리
 		// 시작 시 오른쪽을 향한 형태
@@ -120,12 +131,21 @@ public class SnakeInfo {
 	 @Override
 	 public String toString() {
 	     StringBuilder sb = new StringBuilder(name + ":");
+	     
 	     for (Point p : body) {
 	         // 팀원의 GamePanel이 20px 단위로 그리므로, 좌표를 *20 해서 전송
 	         sb.append(p.x * 20).append(",").append(p.y * 20).append(",");
 	     }
 	     if (!body.isEmpty()) sb.deleteCharAt(sb.length() - 1); // 마지막 콤마 제거
+	     
 	     sb.append(isAlive ? "(A);" : "(D);"); // 생사 여부 (A=Alive, D=Dead)
+	     
+	     sb.append("[")
+	      .append(color.getRed()).append(",")
+	      .append(color.getGreen()).append(",")
+	      .append(color.getBlue())
+	      .append("];");
+	     
 	     return sb.toString();
 	 }
 }

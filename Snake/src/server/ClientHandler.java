@@ -39,7 +39,7 @@ class ClientHandler extends Thread {
             if (line != null && line.startsWith("JOIN ")) {
             	this.clientName = line.substring(5).trim();
             	
-            	gamelogic.addPlayer(clientName);
+            	gamelogic.addPlayer(clientName, this);
                 
                 System.out.println("[" + clientName + "] 님이 입장했습니다.");
                 // 모든 클라이언트에게 입장 메시지 전송 (클라이언트는 "CHAT "으로 시작하는 메시지 파싱)
@@ -84,6 +84,11 @@ class ClientHandler extends Thread {
                 e.printStackTrace();
             }
         }
+    }
+    
+    // 외부에서 클라이언트를 알 수 있도록 함
+    public String getClientName() {
+        return this.clientName;
     }
 
     // 현재 클라이언트에게 메시지 전송 (서버 -> 클라이언트)
