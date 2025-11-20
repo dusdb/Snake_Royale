@@ -16,7 +16,7 @@ public class GameLogic implements Runnable {
     public static final int BOARD_HEIGHT = 38;  // 600px / 20px
     
     // 0.15초마다 게임 상태 갱신 (지렁이 속도)
-    private final int TICK_RATE_MS = 50; 
+    private final int TICK_RATE_MS = 120; 
 
     private ServerMain server; // broadcast를 위한 서버 참조
     private Random rand = new Random();
