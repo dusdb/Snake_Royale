@@ -11,6 +11,9 @@ public class GamePanel extends JPanel implements GameStateListener {
 
     private final NetworkClient networkClient;
     private GameState gameState;
+    // 종 게임 상태를 보존하기 위한 백업 데이터
+    // 어떤 상황(먼저 죽거나 혼자 플레이할 때 등)에서도 게임 종료 화면이 제대로 표시
+    private GameState lastState; 
     private final String myName;
     private final SidePanel sidePanel;
 
@@ -18,6 +21,7 @@ public class GamePanel extends JPanel implements GameStateListener {
                      GameState initialState, String myName) {
         this.networkClient = networkClient;
         this.gameState = initialState;
+        this.lastState = initialState;
         this.myName = myName;
 
         setLayout(new BorderLayout());
@@ -67,6 +71,7 @@ public class GamePanel extends JPanel implements GameStateListener {
     @Override
     public void onGameStateUpdated(GameState state) {
         this.gameState = state;
+        this.lastState = state;
         repaint();
 
         if (!state.scores.isEmpty()) {
@@ -88,13 +93,14 @@ public class GamePanel extends JPanel implements GameStateListener {
     
     // 서버에서 GAMEOVER 메시지를 받으면 오른쪽 로그창에 출력하기 위한 전달자 역할
     @Override
-    public void onGameOver() {
+    public void onGameOver(GameState finalState) {
         SwingUtilities.invokeLater(() -> {
             ClientMain frame = (ClientMain) SwingUtilities.getWindowAncestor(this);
-            frame.setContentPane(new GameOverPanel(frame, gameState));
+            frame.setContentPane(new GameOverPanel(frame, finalState));
             frame.revalidate();
         });
     }
+
 
 
     // ====================== 게임 화면 ====================== //

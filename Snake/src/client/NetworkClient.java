@@ -19,6 +19,8 @@ public class NetworkClient {
     // CopyOnWriteArrayList는 여러 스레드에서 동시에 add/remove해도 안전한 리스트
     private final List<GameStateListener> listeners = new CopyOnWriteArrayList<>();
     private volatile boolean running = false;
+    
+    public GameState lastGameState;
 
     
     // 네트워크 패킷을 처리해서 UI에 반영할 때, GamePanel처럼 GameState를 수신해야 하는 객체를 등록
@@ -79,6 +81,8 @@ public class NetworkClient {
                     System.out.println("⚠ RAW STATE = " + payload);
 
                     GameState state = parseState(payload);
+                    
+                    lastGameState = state;
                     notifyStateUpdated(state);
                 }
                 // 서버 메시지 처리 흐름
@@ -96,7 +100,17 @@ public class NetworkClient {
                 // 3. GameStateListener에 있는 onGameOver 메서드로 모든 Listener에게 전달
                 // 4. GamePanel에서 GameOverPAnel로 변경
                 else if (line.startsWith("GAMEOVER")) {
-                    notifyGameOver();
+                    String payload = null;
+
+                    if (line.contains(" ")) {
+                        payload = line.substring(line.indexOf(" ") + 1).trim();
+                    }
+
+                    GameState finalState = (payload != null)
+                            ? parseState(payload)
+                            : this.lastGameState; // 마지막 STATE 백업본 사용
+
+                    notifyGameOver(finalState);
                 }
             }
         } catch (Exception e) {
@@ -111,9 +125,9 @@ public class NetworkClient {
         }
     }
 
-    private void notifyGameOver() {
+    private void notifyGameOver(GameState finalState) {
         for (GameStateListener l : listeners) {
-            SwingUtilities.invokeLater(l::onGameOver);
+            SwingUtilities.invokeLater(() -> l.onGameOver(finalState));
         }
     }
 

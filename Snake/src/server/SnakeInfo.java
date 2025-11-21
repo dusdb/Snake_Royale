@@ -138,7 +138,7 @@ public class SnakeInfo {
 	     }
 	     if (!body.isEmpty()) sb.deleteCharAt(sb.length() - 1); // 마지막 콤마 제거
 	     
-	     sb.append(isAlive ? "(A);" : "(D);"); // 생사 여부 (A=Alive, D=Dead)
+	     sb.append(isAlive ? "(A)" : "(D)"); // 생사 여부 (A=Alive, D=Dead)
 	     
 	     sb.append("[")
 	      .append(color.getRed()).append(",")
