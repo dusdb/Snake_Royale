@@ -82,13 +82,14 @@ public class NetworkClient {
 
                     GameState state = parseState(payload);
                     
+                    // lastGameState에 최신 상태를 계속 받아 갱신
                     lastGameState = state;
                     notifyStateUpdated(state);
                 }
                 // 서버 메시지 처리 흐름
                 // 1. 서버가 CHAT 메시지를 보냄
                 // 2. 클라이언트에서 수신
-                // 3. GameStateListener에 있는 onChatMessage 메서드로 모든 Listener에게 전달
+                // 3. GameStateListener에 있는 onChatMessage 메서드로 Listener에게 전달
                 // 4. GamePanel에서 메시지 표시
                 else if (line.startsWith("CHAT")) {
                     notifyChatMessage(line.substring(5));
@@ -97,8 +98,8 @@ public class NetworkClient {
                 // 서버 게임 종료 처리 흐름
                 // 1. 서버가 GAMEOVER 메시지를 보냄
                 // 2. 클라이언트에서 수신
-                // 3. GameStateListener에 있는 onGameOver 메서드로 모든 Listener에게 전달
-                // 4. GamePanel에서 GameOverPAnel로 변경
+                // 3. GameStateListener에 있는 onGameOver 메서드로 Listener에게 전달
+                // 4. GamePanel에서 GameOverPanel로 변경
                 else if (line.startsWith("GAMEOVER")) {
                     String payload = null;
 

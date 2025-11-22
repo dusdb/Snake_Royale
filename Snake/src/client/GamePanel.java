@@ -128,7 +128,7 @@ public class GamePanel extends JPanel implements GameStateListener {
             g.setColor(Color.RED);
             g.fillOval(gameState.appleX, gameState.appleY, 20, 20);
 
-            // 모든 뱀
+            // 모든 뱀을 가져온 뒤 생존 여부를 확인 후 화면에 표시
             for (String name : gameState.snakeBodies.keySet()) {
                 boolean alive = gameState.snakeAlive.get(name);
                 if (!alive) continue;

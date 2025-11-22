@@ -21,7 +21,7 @@ public class SnakeInfo {
         this.playerName = playerName;
     }
 
-    // 클라에서 색상 업데이트
+    // 클라이언트에서 색상 업데이트
     public void setColor(Color color) {
         this.color = color;
     }
