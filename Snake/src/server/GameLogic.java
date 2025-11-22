@@ -179,14 +179,14 @@ public class GameLogic implements Runnable {
         // 4. 사망자 처리 및 개별 통보
         for (String deadSnakeName : deadSnakes) {
             
-            // [변경] ServerMain을 거치지 않고, 저장해둔 핸들러를 꺼내서 바로 전송!
+            // ServerMain을 거치지 않고, 저장해둔 핸들러를 꺼내서 바로 전송
             ClientHandler handler = playerHandlers.get(deadSnakeName);
             if (handler != null) {
-                handler.sendMessage("GAMEOVER"); // 💥 너한테만 바로 전송!
+                handler.sendMessage("GAMEOVER"); // 사망자 처리 통보
                 System.out.println(deadSnakeName + "에게 GAMEOVER 전송 완료");
+                //handler.close(); // 소켓 해제
             }
-            
-            removePlayer(deadSnakeName); // 리스트에서 삭제
+            //removePlayer(deadSnakeName); // 리스트에서 삭제
         }	
     }
     
@@ -222,4 +222,3 @@ public class GameLogic implements Runnable {
         return sb.toString();
     }
 }
-
