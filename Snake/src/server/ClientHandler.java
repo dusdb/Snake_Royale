@@ -28,6 +28,17 @@ class ClientHandler extends Thread {
             System.out.println("스트림 초기화 오류: " + e.getMessage());
         }
     }
+    
+    // 소켓을 강제로 닫는 메소드
+    public void close() {
+        try {
+            if (socket != null && !socket.isClosed()) {
+                socket.close(); // 소켓을 닫으면 readLine()에서 예외가 발생하며 run()이 종료됨
+            }
+        } catch (IOException e) {
+            System.out.println("소켓 종료 중 오류: " + e.getMessage());
+        }
+    }
 
     // 클라이언트로부터 메시지 수신
     @Override
@@ -66,6 +77,7 @@ class ClientHandler extends Thread {
 
         } catch (IOException e) {
             // 클라이언트 접속 종료 (정상 또는 비정상)
+        	System.out.println(clientName + " 연결 종료됨.");
         } finally {
             // 종료 처리
             System.out.println("[" + clientName + "] 님의 연결이 끊어졌습니다.");
