@@ -24,9 +24,15 @@ public class ClientMain extends JFrame {
 
     // GamePanel로 전환할 때 호출
     public void showGame(GameState initialState, String playerName) {
-        setContentPane(new GamePanel(this, networkClient, initialState, playerName));
+    	// [수정 후] GamePanel 객체를 변수에 담아서 포커스를 요청할 수 있게 변경
+        GamePanel gamePanel = new GamePanel(this, networkClient, initialState, playerName);
+        setContentPane(gamePanel);
+        
         revalidate();
         repaint();
+        
+        // [핵심 해결책] 화면을 그린 직후에 "키보드 입력은 여기서 받아라"라고 강제 포커스 설정
+        gamePanel.requestFocusInWindow(); 
     }
 
     
