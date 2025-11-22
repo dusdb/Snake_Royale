@@ -30,7 +30,7 @@ public class GameOverPanel extends JPanel {
         add(Box.createVerticalStrut(20));
         add(rankLabel);
 
-        // 점수 정렬
+        // 게임 상태를 생성자에서 전달받아 내림차순으로 정렬 후 포맷에 맞게 화면에 출력 
         java.util.List<String> ranking = gameState.scores.entrySet().stream()
                 .sorted((a, b) -> b.getValue() - a.getValue())
                 .map(e -> e.getKey())
