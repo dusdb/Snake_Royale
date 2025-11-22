@@ -32,15 +32,13 @@ public class ServerMain {
                 Socket socket = serverSocket.accept(); 
                 System.out.println("클라이언트 접속 성공: " + socket.getInetAddress());
 
-                // 클라이언트별 전담 스레드 생성
-                ClientHandler handler = new ClientHandler(socket, this, gamelogic);
-                
+                ClientHandler handler = new ClientHandler(socket, this, gamelogic); // 클라이언트별 전담 스레드 생성
                 addClient(handler); // 리스트에 추가
                 handler.start(); // 스레드 시작
             }
 
         } catch (IOException e) {
-            System.out.println("서버 시작 오류: " + e.getMessage());
+            System.out.println("서버 오류: " + e.getMessage());
         }
     }
 
@@ -54,11 +52,12 @@ public class ServerMain {
     // Vector에 클라이언트 추가 (동기화)
     public synchronized void addClient(ClientHandler client) {
         clientHandlers.add(client);
-        System.out.println("새 클라이언트 추가. 현재 인원: " + clientHandlers.size());
+        System.out.println("새 클라이언트 접속. 현재 인원: " + clientHandlers.size());
     }
 
     // Vector에서 클라이언트 제거 (동기화)
     public synchronized void removeClient(ClientHandler client) {
+    	if (client == null) return;
         clientHandlers.remove(client);
         System.out.println("클라이언트 퇴장. 현재 인원: " + clientHandlers.size());
     }
