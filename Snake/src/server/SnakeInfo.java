@@ -19,7 +19,6 @@ public class SnakeInfo {
 	// 몸 길이 증가 플래그 (사과를 먹은 직후 한번만 true -> 이동 시 꼬리 안자름 (몸길이 +1))
 	private boolean justAte = false; 
 	
-
 	public SnakeInfo(String name, int startX, int startY) {
 		this.name = name;
 		
