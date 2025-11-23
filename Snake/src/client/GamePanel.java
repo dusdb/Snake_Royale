@@ -32,7 +32,7 @@ public class GamePanel extends JPanel implements GameStateListener {
         add(canvas, BorderLayout.CENTER);
 
         // 사이드 영역
-        sidePanel = new SidePanel(frame, myName);
+        sidePanel = new SidePanel(frame, myName, networkClient);
         add(sidePanel, BorderLayout.EAST);
 
         // 서버 상태 업데이트 등록
@@ -96,7 +96,8 @@ public class GamePanel extends JPanel implements GameStateListener {
     public void onGameOver(GameState finalState) {
         SwingUtilities.invokeLater(() -> {
             ClientMain frame = (ClientMain) SwingUtilities.getWindowAncestor(this);
-            frame.setContentPane(new GameOverPanel(frame, finalState));
+            
+            frame.setContentPane(new GameOverPanel(frame, finalState, networkClient));
             frame.revalidate();
         });
     }
@@ -151,8 +152,12 @@ public class GamePanel extends JPanel implements GameStateListener {
 
         private final DefaultListModel<String> rankModel;
         private final JTextArea systemLog;
+        private final NetworkClient networkClient;
 
-        public SidePanel(ClientMain frame, String playerName) {
+        // NetworkClient를 SidePanel에도 전달하여 나가기할 때 기존 networkClient.close로 정상 종료
+        // StartPanel로 돌아갈 때 새로운 NetworkClient를 정상적으로 전달
+        public SidePanel(ClientMain frame, String playerName, NetworkClient networkClient) {
+            this.networkClient = networkClient;
 
             setPreferredSize(new Dimension(220, 600));
             setBackground(Color.BLACK);
@@ -207,6 +212,9 @@ public class GamePanel extends JPanel implements GameStateListener {
             add(exitButton, gbc);
 
             exitButton.addActionListener(e -> {
+                if (networkClient != null) {
+                    networkClient.close();  // 기존 연결 안전 종료
+                }
                 frame.setContentPane(new StartPanel(frame, new NetworkClient()));
                 frame.revalidate();
             });

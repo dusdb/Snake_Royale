@@ -107,7 +107,7 @@ public class StartPanel extends JPanel {
             try {
                 networkClient.connect(host, port, name);
                 // 연결 성공 → 빈 GameState로 시작 (곧 서버에서 첫 STATE가 옴)
-                frame.showGame(new GameState(), name);
+                frame.showGame(networkClient,new GameState(), name);
             } catch (Exception ex) {
                 ex.printStackTrace();
                 JOptionPane.showMessageDialog(this,
