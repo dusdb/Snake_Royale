@@ -23,7 +23,8 @@ public class ClientMain extends JFrame {
     }
 
     // GamePanel로 전환할 때 호출
-    public void showGame(GameState initialState, String playerName) {
+    // StartPanel → ClientMain.showGame() → GamePanel 전달 과정에 networkClient 추가
+    public void showGame(NetworkClient networkClient, GameState initialState, String playerName) {
     	// [수정 후] GamePanel 객체를 변수에 담아서 포커스를 요청할 수 있게 변경
         GamePanel gamePanel = new GamePanel(this, networkClient, initialState, playerName);
         setContentPane(gamePanel);

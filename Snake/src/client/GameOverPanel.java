@@ -10,8 +10,11 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 public class GameOverPanel extends JPanel {
+	
+	private final NetworkClient networkClient;
 
-    public GameOverPanel(ClientMain frame, GameState gameState) {
+	public GameOverPanel(ClientMain frame, GameState gameState, NetworkClient networkClient) {
+        this.networkClient = networkClient;
 
         setBackground(Color.BLACK);
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
@@ -50,7 +53,15 @@ public class GameOverPanel extends JPanel {
         exitBtn.setBackground(new Color(255, 80, 80));
         exitBtn.setForeground(Color.WHITE);
         exitBtn.setFont(new Font("SansSerif", Font.BOLD, 18));
+        
         exitBtn.addActionListener(e -> {
+            try {
+                networkClient.close();   // <-- 기존 소켓 닫기
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+
+            // StartPanel에 새 NetworkClient 전달
             frame.setContentPane(new StartPanel(frame, new NetworkClient()));
             frame.revalidate();
         });
