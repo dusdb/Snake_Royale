@@ -25,11 +25,12 @@ public class GameLogic implements Runnable {
     private Map<String, SnakeInfo> snakes = new ConcurrentHashMap<>();
     private Map<String, ClientHandler> playerHandlers = new ConcurrentHashMap<>();
     private Point apple;
+    private Point potentialApple;
 
     // 생성자: 서버의 참조를 받아 초기화
     public GameLogic(ServerMain server) {
         this.server = server;
-        spawnApple(); // 사과 생성
+        spawnApple(); // 서버 시작 시 최초 사과 생성
     }
 
     // 게임 루프 스레드 
@@ -59,13 +60,38 @@ public class GameLogic implements Runnable {
     
     // 사과 생성 (랜덤)
     public synchronized void spawnApple() {
-        // 뱀 몸통과 겹치지 않는 위치에 생성하는 로직 추가하면 좋을듯?
-    	// BOARD_WIDTH, BOARD_HEIGHT 안에서 랜덤하게 사과 좌표를 생성
-        int x = rand.nextInt(BOARD_WIDTH);
-        int y = rand.nextInt(BOARD_HEIGHT);
-        apple = new Point(x, y); // Point 객체로 사과 위치 저장
-        System.out.println("새 사과 생성: (" + x + ", " + y + ")");
+    	while (true) {
+    		// 뱀 몸통과 겹치지 않는 위치에 사과를 생성하는 로직 추가
+        	// 1. BOARD_WIDTH, BOARD_HEIGHT 안에서 랜덤하게 사과 좌표를 생성
+            int x = rand.nextInt(BOARD_WIDTH);
+            int y = rand.nextInt(BOARD_HEIGHT);
+            potentialApple = new Point(x, y); // Point 객체로 사과 위치 저장
+            
+            boolean isOverlapping = false;
+            
+            // 2. 현재 접속 중인 모든 뱀(죽은 뱀 시체 포함)과 겹치는지 확인
+            for (SnakeInfo snake : snakes.values()) {
+                // 뱀의 몸통 좌표 리스트를 순회하며 사과 위치와 비교
+                for (Point bodyPart : snake.body) {
+                    if (bodyPart.equals(potentialApple)) {
+                        isOverlapping = true;
+                        break; // 겹침 확인, 더 볼 필요 없음
+                    }
+                }
+                if (isOverlapping) break; // 다음 뱀 확인할 필요 없음
+            }
+
+            // 3. 겹치지 않는 위치라면 사과로 확정하고 루프 종료
+            if (!isOverlapping) {
+                apple = potentialApple;
+                System.out.println("새 사과 생성: (" + x + ", " + y + ")");
+                break;
+            }
+            
+            // 만약 겹쳤다면(isOverlapping == true), while문에 다시 돌아가서 새로운 좌표를 뽑아야함
+        }
     }
+    		
 
     // 방향키 받기
     // ClientHandler가 이 메소드를 호출하여 뱀의 다음 방향을 설정
@@ -81,7 +107,6 @@ public class GameLogic implements Runnable {
         // 새 플레이어 뱀 생성 (시작 위치: 10, 10)
     		SnakeInfo newSnake = new SnakeInfo(clientName, 10, 10);
         snakes.put(clientName, newSnake);
-      
         playerHandlers.put(clientName, handler);  
     }
 
@@ -184,9 +209,7 @@ public class GameLogic implements Runnable {
             if (handler != null) {
                 handler.sendMessage("GAMEOVER"); // 사망자 처리 통보
                 System.out.println(deadSnakeName + "에게 GAMEOVER 전송 완료");
-                //handler.close(); // 소켓 해제
             }
-            //removePlayer(deadSnakeName); // 리스트에서 삭제
         }	
     }
     
