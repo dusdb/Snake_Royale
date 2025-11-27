@@ -17,7 +17,7 @@ public class StartPanel extends JPanel {
         setBackground(Color.BLACK);
         setLayout(new GridBagLayout());
 
-        // ===== Title =====
+        
         JLabel title = new JLabel("Snake Royale");
         title.setForeground(new Color(0, 255, 128));
         title.setFont(new Font("SansSerif", Font.BOLD, 36));
@@ -28,7 +28,7 @@ public class StartPanel extends JPanel {
         gbcTitle.insets = new Insets(30, 10, 40, 10);
         add(title, gbcTitle);
 
-        // ===== 사용자 이름 =====
+        
         JLabel nameLabel = label("사용자 이름:");
         GridBagConstraints gbcNameLabel = new GridBagConstraints();
         gbcNameLabel.gridx = 0;
@@ -43,7 +43,7 @@ public class StartPanel extends JPanel {
         gbcNameField.insets = new Insets(15, 10, 15, 10);
         add(nameField, gbcNameField);
 
-        // ===== 서버 IP =====
+        
         JLabel hostLabel = label("서버 IP:");
         GridBagConstraints gbcHostLabel = new GridBagConstraints();
         gbcHostLabel.gridx = 0;
@@ -59,7 +59,7 @@ public class StartPanel extends JPanel {
         gbcHostField.insets = new Insets(15, 10, 15, 10);
         add(hostField, gbcHostField);
 
-        // ===== 포트 =====
+        
         JLabel portLabel = label("포트:");
         GridBagConstraints gbcPortLabel = new GridBagConstraints();
         gbcPortLabel.gridx = 0;
@@ -75,7 +75,7 @@ public class StartPanel extends JPanel {
         gbcPortField.insets = new Insets(15, 10, 15, 10);
         add(portField, gbcPortField);
 
-        // ===== START 버튼 =====
+        
         JButton startButton = new JButton("START");
         startButton.setFont(new Font("SansSerif", Font.BOLD, 18));
         startButton.setBackground(new Color(0, 255, 128));
@@ -84,7 +84,7 @@ public class StartPanel extends JPanel {
         startButton.setBorder(new RoundedBorder(new Color(0, 255, 128), 2, 20));
         startButton.setPreferredSize(new Dimension(150, 45));
 
-        // 버튼 클릭 동작
+        
         startButton.addActionListener(e -> {
             String name = nameField.getText().trim();
             String host = hostField.getText().trim();
@@ -119,11 +119,11 @@ public class StartPanel extends JPanel {
         gbcStartButton.gridx = 0;
         gbcStartButton.gridy = 4;
         gbcStartButton.gridwidth = 2;
-        gbcStartButton.insets = new Insets(40, 10, 10, 10); // 입력란 아래 적당한 간격
+        gbcStartButton.insets = new Insets(40, 10, 10, 10); 
         add(startButton, gbcStartButton);
     }
 
-    // ===== 텍스트 라벨 생성 =====
+    
     private JLabel label(String text) {
         JLabel l = new JLabel(text);
         l.setForeground(Color.WHITE);
@@ -131,7 +131,7 @@ public class StartPanel extends JPanel {
         return l;
     }
 
-    // ===== 입력 필드 생성 =====
+    
     private JTextField textField() {
         JTextField tf = new JTextField(12);
         tf.setForeground(Color.WHITE);
@@ -141,7 +141,7 @@ public class StartPanel extends JPanel {
         return tf;
     }
 
-    // ===== 둥근 테두리 =====
+    
     static class RoundedBorder extends AbstractBorder {
         private final Color color;
         private final int thickness;
