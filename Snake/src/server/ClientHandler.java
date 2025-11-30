@@ -15,6 +15,9 @@ class ClientHandler extends Thread {
     
     private String clientName = "Unknown"; // 플레이어 닉네임
 
+    // ★ 추가: 스레드 종료 플래그
+    private volatile boolean running = true;
+
     public ClientHandler(Socket socket, ServerMain server, GameLogic gamelogic) {
         this.socket = socket;
         this.server = server;
@@ -37,9 +40,9 @@ class ClientHandler extends Thread {
             String line = in.readLine(); 
             
             if (line != null && line.startsWith("JOIN ")) {
-            	this.clientName = line.substring(5).trim();
-            	
-            	gamelogic.addPlayer(clientName, this);
+                this.clientName = line.substring(5).trim();
+                
+                gamelogic.addPlayer(clientName, this);
                 
                 System.out.println("[" + clientName + "] 님이 입장했습니다.");
                 // 모든 클라이언트에게 입장 메시지 전송 (클라이언트는 "CHAT "으로 시작하는 메시지 파싱)
@@ -49,11 +52,12 @@ class ClientHandler extends Thread {
                 return; // 스레드 종료
             }
             
+
             // 이후 메시지는 "MOVE" 또는 "CHAT"으로 간주하고 계속 수신
-            while ((line = in.readLine()) != null) { // readLine() 대기
+            while (running && (line = in.readLine()) != null) { // readLine() 대기
                 
                 if (line.startsWith("MOVE ")) {
-                	String direction = line.substring(5).trim();
+                    String direction = line.substring(5).trim();
                     // GameLogic에 방향만 설정 (Broadcast 안함)
                     gamelogic.setDirection(clientName, direction);
                 
@@ -66,30 +70,28 @@ class ClientHandler extends Thread {
 
         } catch (IOException e) {
             // 클라이언트 접속 종료 (정상 또는 비정상)
-        	System.out.println(clientName + " 연결 종료됨.");
+            System.out.println(clientName + " 연결 종료됨.");
         } finally {
             // 종료 처리
             System.out.println("[" + clientName + "] 님의 연결이 끊어졌습니다.");
             
             gamelogic.removePlayer(clientName); // GameLogic에서 플레이어 제거
-            
             server.removeClient(this); 
             server.broadcast("CHAT [" + clientName + "] 님이 퇴장했습니다.");
             
-            // 소켓 및 스트림 닫기
-            try {
-                if(out != null) out.close();
-                if(in != null) in.close();
-                if(socket != null) socket.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            try { if(out != null) out.close(); } catch (Exception e) {}    
+            try { if(in != null) in.close(); } catch (IOException e) {}
+            try { if(socket != null) socket.close(); } catch (IOException e) {}
         }
     }
-    
-    // 외부에서 클라이언트를 알 수 있도록 함
-    public String getClientName() {
-        return this.clientName;
+
+    // ★ 추가: 서버가 강제 종료할 때 사용하는 메서드  
+    // (GameLogic에서 죽은 플레이어 소켓을 닫기 위해 필요)
+    public void disconnect() {
+        running = false;
+        try { if(socket != null) socket.close(); } catch(Exception ignored){}
+        try { if(in != null) in.close(); } catch(Exception ignored){}
+        try { if(out != null) out.close(); } catch(Exception ignored){}
     }
 
     // 현재 클라이언트에게 메시지 전송 (서버 -> 클라이언트)
@@ -101,5 +103,10 @@ class ClientHandler extends Thread {
         } catch (Exception e) {
             System.out.println("[" + clientName + "]에게 메시지 전송 오류: " + e.getMessage());
         }
+    }
+    
+    // 외부에서 클라이언트를 알 수 있도록 함
+    public String getClientName() {
+        return this.clientName;
     }
 }

@@ -1,11 +1,28 @@
 package client;
 
-import javax.swing.*;
-import javax.swing.border.LineBorder;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+import java.awt.Point;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.List;
+
+import javax.swing.DefaultListModel;
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
+import javax.swing.border.LineBorder;
 
 public class GamePanel extends JPanel implements GameStateListener {
 
@@ -94,6 +111,9 @@ public class GamePanel extends JPanel implements GameStateListener {
     // 서버에서 GAMEOVER 메시지를 받으면 오른쪽 로그창에 출력하기 위한 전달자 역할
     @Override
     public void onGameOver(GameState finalState) {
+    	// 이 GamePanel을 리스너에서 제거
+    	networkClient.removeListener(this);
+    	
         SwingUtilities.invokeLater(() -> {
             ClientMain frame = (ClientMain) SwingUtilities.getWindowAncestor(this);
             
@@ -102,9 +122,13 @@ public class GamePanel extends JPanel implements GameStateListener {
         });
     }
 
+    @Override
+    public void removeNotify() {
+        networkClient.removeListener(this);
+        super.removeNotify();
+    }
 
 
-    // ====================== 게임 화면 ====================== //
     class GameCanvas extends JPanel {
         GameCanvas() {
             setPreferredSize(new Dimension(960, 760));
@@ -147,7 +171,6 @@ public class GamePanel extends JPanel implements GameStateListener {
     }
 
 
-    // ====================== 오른쪽 패널 ====================== //
     static class SidePanel extends JPanel {
 
         private final DefaultListModel<String> rankModel;
