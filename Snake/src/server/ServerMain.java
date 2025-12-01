@@ -5,25 +5,23 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Vector;
 
-// 지렁이 게임 메인 서버
 public class ServerMain {
 
     private ServerSocket serverSocket;
-    private int port = 5000; // 서버 포트
+    private int port = 5000; 
     
     // 접속한 모든 ClientHandler를 저장
     private Vector<ClientHandler> clientHandlers = new Vector<>();
     private GameLogic gamelogic;
 
-    // 서버 시작
     public void startServer() {
         try {
             serverSocket = new ServerSocket(port);
             System.out.println("지렁이 게임 서버가 " + port + " 포트에서 시작되었습니다.");
 
             gamelogic = new GameLogic(this);
-            
             Thread gameLoopThread = new Thread(gamelogic, "GameLoop-Thread");
+            
             gameLoopThread.start(); // GameLogic.run() 실행 시작
             
             // 클라이언트 접속을 항상 기다림
@@ -62,7 +60,6 @@ public class ServerMain {
         System.out.println("클라이언트 퇴장. 현재 인원: " + clientHandlers.size());
     }
 
-    // 메인 메소드
     public static void main(String[] args) {
         ServerMain server = new ServerMain();
         server.startServer();

@@ -1,33 +1,29 @@
 package server;
 
-import java.awt.Point; // 뱀과 사과의 좌표(x, y)를 관리하기 위해 사용
+import java.awt.Point; // 지렁이와 사과의 좌표(x, y)를 관리하기 위해 사용
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 
-// 게임의 모든 로직 담당 클래스
 // Runnable로 별도의 게임 루프 스레드로 동작
 public class GameLogic implements Runnable {
     
-    // 게임 보드 크기 (GamePanel -> 600x600에 20px 단위로 그림)
-    public static final int BOARD_WIDTH = 48; // 600px / 20px
-    public static final int BOARD_HEIGHT = 38;  // 600px / 20px
-    
-    // 0.15초마다 게임 상태 갱신 (지렁이 속도)
-    private final int TICK_RATE_MS = 120; 
+    // 게임 보드 크기 (GamePanel -> 960x760에 20px 단위로 그림)
+    public static final int BOARD_WIDTH = 48; // 960px / 20px
+    public static final int BOARD_HEIGHT = 38;  // 760px / 20px
+    private final int TICK_RATE_MS = 120;     // 0.15초마다 게임 상태 갱신 (지렁이 속도)
 
     private ServerMain server; // broadcast를 위한 서버 참조
     private Random rand = new Random();
 
-    // 여러 ClientHandler가 동시에 뱀의 방향을 바꿀 수 있기 때문에 스레드에 안전한 Map 사용
+    // 여러 ClientHandler가 동시에 지렁이의 방향을 바꿀 수 있기 때문에 스레드에 안전한 Map을 사용
     private Map<String, SnakeInfo> snakes = new ConcurrentHashMap<>();
     private Map<String, ClientHandler> playerHandlers = new ConcurrentHashMap<>();
+    
     private Point apple;
-    private Point potentialApple;
 
-    // 생성자: 서버의 참조를 받아 초기화
     public GameLogic(ServerMain server) {
         this.server = server;
         spawnApple(); // 서버 시작 시 최초 사과 생성
@@ -42,10 +38,8 @@ public class GameLogic implements Runnable {
                 // (선순위 규칙 반영) 모든 게임 로직(이동, 충돌, 사과) 업데이트
                 updateGame();
                               
-                // (위치 계산 후 전송) 갱신된 게임 상태를 문자열로 변환
+                // 위치 계산 후 전송을 위해 갱신된 게임 상태를 문자열로 변환
                 String stateString = getGameStateString();
-                
-                // 모든 클라이언트에게 현재 게임 상태 전파
                 server.broadcast(stateString);
                 
                 // 다음 틱(Tick)까지 대기 (지렁이 속도 조절)
@@ -53,21 +47,29 @@ public class GameLogic implements Runnable {
                 
             } catch (InterruptedException e) {
                 System.out.println("게임 루프가 중지되었습니다.");
-                break; // 스레드 종료
+                break; 
             }
         }
     }
     
-    // 사과 생성 (랜덤)
+    // 플레이어의 방향 변경 요청 처리 
+    public void setDirection(String clientName, String direction) {
+        SnakeInfo snake = snakes.get(clientName);
+        if (snake != null && snake.isAlive) {
+            snake.setDirection(direction);
+        }
+    }
+    
+    // 사과 생성 로직 (랜덤)
     public synchronized void spawnApple() {
         while (true) {
             int x = rand.nextInt(BOARD_WIDTH);
             int y = rand.nextInt(BOARD_HEIGHT);
-            potentialApple = new Point(x, y); // Point 객체로 사과 위치 저장
             
+            Point potentialApple = new Point(x, y); // Point 객체로 사과 위치 저장
             boolean isOverlapping = false;
             
-            // 뱀의 몸통과 겹치지 않는 위치인지 검사
+            // 지렁이의 몸통과 겹치지 않는 위치인지 검사
             for (SnakeInfo snake : snakes.values()) {
                 for (Point bodyPart : snake.body) {
                     if (bodyPart.equals(potentialApple)) {
@@ -77,20 +79,11 @@ public class GameLogic implements Runnable {
                 }
                 if (isOverlapping) break;
             }
-
             if (!isOverlapping) {
                 apple = potentialApple;
                 System.out.println("새 사과 생성: (" + x + ", " + y + ")");
                 break;
             }
-        }
-    }
-
-    // 방향키 받기
-    public void setDirection(String clientName, String direction) {
-        SnakeInfo snake = snakes.get(clientName);
-        if (snake != null && snake.isAlive) {
-            snake.setDirection(direction);
         }
     }
 
@@ -107,13 +100,14 @@ public class GameLogic implements Runnable {
         playerHandlers.remove(clientName);
     }
     
-    // 게임 한 틱 업데이트
+    // 게임의 한 프레임 업데이트 로직
+    // 이동 -> 사과 섭취 -> 충돌 판정 -> 사망 처리
     private synchronized void updateGame() {
         if (snakes.isEmpty()) return; // 플레이어 없으면 아무것도 안함
         
         List<String> deadSnakes = new ArrayList<>();
 
-        // 1. 모든 뱀 이동
+        // 1. 모든 살아있는 지렁이 이동
         for (SnakeInfo snake : snakes.values()) {
             if (snake.isAlive) {
                 snake.move();
@@ -135,7 +129,7 @@ public class GameLogic implements Runnable {
 
             Point head = snake.getHead();
 
-            // 다른 뱀들과의 충돌 검사
+            // (3-1) 다른 지렁이들과의 충돌 검사
             for (SnakeInfo other : snakes.values()) {
                 if (!other.isAlive) continue;
                 if (snake == other) continue;
@@ -149,7 +143,7 @@ public class GameLogic implements Runnable {
                     break;
                 }
 
-                // (B) 내 머리가 다른 뱀 몸통과 충돌
+                // (B) 내 머리가 다른 지렁이 몸통과 충돌
                 if (other.checkBodyCollision(head)) {
                     snake.die();
                     deadSnakes.add(snake.name);
@@ -161,14 +155,14 @@ public class GameLogic implements Runnable {
 
             if (!snake.isAlive) continue;
 
-            // 벽 충돌
+            // (3-2) 벽 충돌
             if (head.x < 0 || head.x >= BOARD_WIDTH || head.y < 0 || head.y >= BOARD_HEIGHT) {
                 snake.die();
                 deadSnakes.add(snake.name);
                 continue;
             }
 
-            // 자기 몸과 충돌
+            // (3-3) 자기 몸과 충돌
             if (snake.checkSelfCollision()) {
                 snake.die();
                 deadSnakes.add(snake.name);
@@ -176,42 +170,38 @@ public class GameLogic implements Runnable {
             }
         }
         
-        // 4. 사망자 처리
+        // 4. 사망한 플레이어 처리
         for (String deadName : deadSnakes) {
-            
             ClientHandler handler = playerHandlers.get(deadName);
-
             if (handler != null) {
-                handler.sendMessage("GAMEOVER");  // ★ GAMEOVER 알림 전송
+                handler.sendMessage("GAMEOVER");  // GAMEOVER 알림 전송
                 System.out.println(deadName + "에게 GAMEOVER 전송 완료");
 
-                // ★★★ 죽은 플레이어의 ClientHandler 소켓 즉시 종료 ★★★
-                handler.disconnect();
-
-                // 목록에서 제거
-                removePlayer(deadName);
-
+                handler.disconnect(); // 사망한 플레이어의 ClientHandler 소켓 즉시 종료
+         
+                removePlayer(deadName); // 목록에서 제거
                 System.out.println(deadName + " 제거됨 + 소켓 종료됨");
             }
         }   
     }
     
-    // 상태 문자열 생성
+    // 현재 게임 상태 문자열 생성
     private synchronized String getGameStateString() {
         StringBuilder sb = new StringBuilder("STATE ");
-        
         for (SnakeInfo snake : snakes.values()) {
             sb.append(snake.toString());
         }
-        
-        sb.append("|A:").append(apple.x * 20).append(",").append(apple.y * 20);
-        
+        if (apple != null) { // 사과가 없는 예외적 상황에서 서버가 죽지 않기 위함
+        	sb.append("|A:").append(apple.x * 20).append(",").append(apple.y * 20);
+        }
+  
         sb.append("|S:");
         for (SnakeInfo snake : snakes.values()) {
             sb.append(snake.name).append("=").append(snake.score).append(",");
         }
-        if (!snakes.isEmpty()) sb.deleteCharAt(sb.length() - 1);
-
+        if (!snakes.isEmpty()) {
+        	sb.deleteCharAt(sb.length() - 1);
+        }
         return sb.toString();
     }
 }

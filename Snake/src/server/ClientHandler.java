@@ -3,7 +3,8 @@ package server;
 import java.io.*;
 import java.net.Socket;
 
-// 각 클라이언트 통신 전담 스레드 
+// 각 클라이언트 통신 전담 스레드 (1:1 통신)
+// 수신된 메시지 파싱, 서버 로직 호출
 class ClientHandler extends Thread {
     
     private Socket socket;          
@@ -13,10 +14,8 @@ class ClientHandler extends Thread {
     private BufferedReader in;
     private PrintWriter out;
     
-    private String clientName = "Unknown"; // 플레이어 닉네임
-
-    // ★ 추가: 스레드 종료 플래그
-    private volatile boolean running = true;
+    private String clientName = "Unknown"; 
+    private volatile boolean running = true; // 스레드 종료 플래그
 
     public ClientHandler(Socket socket, ServerMain server, GameLogic gamelogic) {
         this.socket = socket;
@@ -36,31 +35,27 @@ class ClientHandler extends Thread {
     @Override
     public void run() {
         try {
-            // 첫 번째 메시지는 "JOIN 닉네임" 프로토콜로 처리
+            // 1. 입장 프로토콜 처리
+        	// 첫 번째 메시지는 "JOIN 닉네임" 프로토콜로 처리
             String line = in.readLine(); 
-            
             if (line != null && line.startsWith("JOIN ")) {
                 this.clientName = line.substring(5).trim();
-                
+
                 gamelogic.addPlayer(clientName, this);
-                
                 System.out.println("[" + clientName + "] 님이 입장했습니다.");
                 // 모든 클라이언트에게 입장 메시지 전송 (클라이언트는 "CHAT "으로 시작하는 메시지 파싱)
                 server.broadcast("CHAT [" + clientName + "] 님이 입장했습니다.");
             } else {
                 System.out.println("프로토콜 오류: JOIN 메시지 필요.");
-                return; // 스레드 종료
-            }
-            
+                return; 
+            }  
 
+            // 2. 메인 통신 루프 
             // 이후 메시지는 "MOVE" 또는 "CHAT"으로 간주하고 계속 수신
             while (running && (line = in.readLine()) != null) { // readLine() 대기
-                
                 if (line.startsWith("MOVE ")) {
                     String direction = line.substring(5).trim();
-                    // GameLogic에 방향만 설정 (Broadcast 안함)
-                    gamelogic.setDirection(clientName, direction);
-                
+                    gamelogic.setDirection(clientName, direction); // GameLogic에 방향만 설정 (Broadcast 안함)
                 } else if (line.startsWith("CHAT ")) {
                     // 채팅 메시지 중계
                     String chatMsg = line.substring(5);
@@ -69,7 +64,7 @@ class ClientHandler extends Thread {
             }
 
         } catch (IOException e) {
-            // 클라이언트 접속 종료 (정상 또는 비정상)
+            // 클라이언트 접속 종료 
             System.out.println(clientName + " 연결 종료됨.");
         } finally {
             // 종료 처리
@@ -85,8 +80,8 @@ class ClientHandler extends Thread {
         }
     }
 
-    // ★ 추가: 서버가 강제 종료할 때 사용하는 메서드  
-    // (GameLogic에서 죽은 플레이어 소켓을 닫기 위해 필요)
+    // 외부에서 강제 종료 요청 시 호출  
+    // GameLogic에서 죽은 플레이어 소켓을 닫기 위해 필요
     public void disconnect() {
         running = false;
         try { if(socket != null) socket.close(); } catch(Exception ignored){}
@@ -98,7 +93,7 @@ class ClientHandler extends Thread {
     public void sendMessage(String message) {
         try {
             if (out != null) {
-                out.println(message); // autoFlush=true이므로 flush() 불필요
+                out.println(message); // autoFlush=true이므로, flush() 불필요
             }
         } catch (Exception e) {
             System.out.println("[" + clientName + "]에게 메시지 전송 오류: " + e.getMessage());

@@ -5,16 +5,15 @@ import java.awt.Point;
 import java.util.LinkedList;
 import java.util.Random;
 
-// 뱀 한 마리의 데이터(위치, 방향, 점수)를 관리하는 객체 -> 개별로 추적
-// (GameLogic이 여러 뱀을 관리하는데, 그 중에서 한 마리)
+// 각 지렁이의 상태정보(위치, 방향, 점수)를 관리하는 객체 -> 개별로 추적
+// (GameLogic이 여러 지렁이를 관리하는데, 그 중에서 한 마리)
 public class SnakeInfo {
 	public String name;
-	public LinkedList<Point> body = new LinkedList<>(); // 뱀 몸통 좌표 리스트 (첫번째가 머리)
+	public LinkedList<Point> body = new LinkedList<>(); // 지렁이 몸통 좌표 리스트 (첫번째가 머리)
 	public String direction = "RIGHT"; // 현재 이동 방향 (UP, DOWN, LEFT, RIGHT)
 	public boolean isAlive = true; // 생존 여부
 	public int score = 0; // 점수
 	public Color color;
-
 
 	// 몸 길이 증가 플래그 (사과를 먹은 직후 한번만 true -> 이동 시 꼬리 안자름 (몸길이 +1))
 	private boolean justAte = false; 
@@ -26,7 +25,7 @@ public class SnakeInfo {
 	    Random r = new Random();
 	    this.color = new Color(r.nextInt(256), r.nextInt(256), r.nextInt(256));
 	    
-		// 뱀 초기화 (시작 좌표와 기본 길이 3으로 설정)
+		// 지렁이 몸통 초기화 (시작 좌표와 기본 길이 3으로 설정)
 		// LinkedList 앞이 머리 (addFirst), 뒤가 꼬리
 		// 시작 시 오른쪽을 향한 형태
 		body.addFirst(new Point(startX, startY)); // 머리
@@ -39,7 +38,8 @@ public class SnakeInfo {
 	}
 
 	// ClientHandler에서 호출됨
-	// 뱀이 반대 방향으로 즉시 꺾는 것 방지
+	// 지렁이 방향 설정
+	// 지렁이가 반대 방향으로 즉시 꺾는 것도 방지
 	public void setDirection(String newDir) {
 		if (newDir.equals("UP") && direction.equals("DOWN")) return;
 		if (newDir.equals("DOWN") && direction.equals("UP")) return;
@@ -48,11 +48,10 @@ public class SnakeInfo {
 		this.direction = newDir;
 	}
 
-	// 이동 로직
 	// GameLogic.updateGame()에 호출됨
-	// 설정된 'direction'에 따라 뱀을 한칸씩 이동
+	// 설정된 'direction'에 따라 지렁이를 한칸씩 이동
 	public void move() {
-		if (!isAlive) return; // 죽은 뱀은 움직이지 않음
+		if (!isAlive) return; // 죽은 지렁이는 움직이지 않음
      
 		Point newHead = new Point(getHead()); // 현재 머리 위치 복사
 		switch (direction) {
@@ -82,7 +81,7 @@ public class SnakeInfo {
 	 }
 	
 	 // 킬 점수 시스템
-	 // 다른 뱀을 죽였을 때 호출
+	 // 다른 지렁이를 죽였을 때 호출
 	 public void addKillScore() {
 	     this.score += 5; // 킬 점수 +5
 	 }
@@ -95,16 +94,16 @@ public class SnakeInfo {
 	 }
 	
 	 // 충돌 판정
-	 // 뱀 죽음 처리 로직
+	 // 지렁이 죽음 처리 로직
 	 public void die() {
 	     this.isAlive = false;
 	 }
 	 
 	 // 충돌 판정 (자기 몸통 충돌)
-	 // 뱀의 머리가 자기 몸통(머리 제외)과 겹치는지 확인합니다.
+	 // 지렁이의 머리가 자기 몸통(머리 제외)과 겹치는지 체크
 	 public boolean checkSelfCollision() {
 	     Point head = getHead();
-	     // 머리를 제외한 몸통과 머리가 겹치는지 확인 (1번 인덱스부터)
+	     // 머리(0번 인덱스)를 제외한 몸통과 머리가 겹치는지 검사 (1번 인덱스부터)
 	     for (int i = 1; i < body.size(); i++) {
 	         if (head.equals(body.get(i))) {
 	             return true;
@@ -113,9 +112,10 @@ public class SnakeInfo {
 	     return false;
 	 }
 	 
-	 // 충돌 판정 (다른 뱀 몸통 충돌)
+	 // 충돌 판정 (다른 지렁이 몸통 충돌)
+	 // 다른 지렁이의 머리가 내 몸통에 닿았는지 검사
 	 public boolean checkBodyCollision(Point otherHead) {
-	     // 내 몸통 전체(머리 포함)와 다른 뱀의 머리가 겹치면 true
+	     // 내 몸통 전체(머리 포함)와 다른 지렁이의 머리가 겹치면 true
 	     for (Point part : body) {
 	         if (otherHead.equals(part)) {
 	             return true; // 충돌
@@ -125,7 +125,7 @@ public class SnakeInfo {
 	 }
 	
 	 // 위치 전송
-	 // 클라이언트에 전송할 이 뱀의 상태 문자열로 변환
+	 // 클라이언트에 전송할 이 지렁이의 상태 문자열로 변환
 	 // ex) "Player1:10,10,10,11,10,12(A);" (A=Alive, D=Dead)
 	 @Override
 	 public String toString() {
