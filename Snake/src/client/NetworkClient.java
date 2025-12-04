@@ -67,7 +67,7 @@ public class NetworkClient {
             while ((line = in.readLine()) != null) {
 
             	// 서버에서 받은 모든 텍스트를 콘솔에 출력하는 디버깅용 코드
-                System.out.println("RECV >>> " + line);  
+                //System.out.println("RECV >>> " + line);  
 
                 // STATE 데이터 처리 흐름
                 // 1. 서버에서 STATE가 전송됨
@@ -78,7 +78,7 @@ public class NetworkClient {
                 if (line.startsWith("STATE") || line.startsWith("STATE_UPDATE")) {
 
                     String payload = line.substring(line.indexOf(" ") + 1).trim();
-                    System.out.println("⚠ RAW STATE = " + payload);
+                    //System.out.println("⚠ RAW STATE = " + payload);
 
                     GameState state = parseState(payload);
                     
@@ -204,7 +204,7 @@ public class NetworkClient {
             }
         }
         
-        System.out.println("⚠ RAW STATE = " + payload);
+        //System.out.println("⚠ RAW STATE = " + payload);
 
 
         return gs;
