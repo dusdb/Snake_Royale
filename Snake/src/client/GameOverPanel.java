@@ -19,6 +19,8 @@ public class GameOverPanel extends JPanel {
         setBackground(Color.BLACK);
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 
+        add(Box.createVerticalGlue());   // 위쪽 여백
+        
         JLabel title = new JLabel("Game Over");
         title.setAlignmentX(CENTER_ALIGNMENT);
         title.setForeground(Color.RED);
@@ -34,16 +36,20 @@ public class GameOverPanel extends JPanel {
         add(rankLabel);
 
         // 게임 상태를 생성자에서 전달받아 내림차순으로 정렬 후 포맷에 맞게 화면에 출력 
-        java.util.List<String> ranking = gameState.scores.entrySet().stream()
-                .sorted((a, b) -> b.getValue() - a.getValue())
-                .map(e -> e.getKey())
+        var ranking = gameState.scores.entrySet().stream()
+                .sorted((a, b) -> b.getValue() - a.getValue())  
                 .toList();
 
         for (int i = 0; i < ranking.size(); i++) {
-            JLabel player = new JLabel((i + 1) + ". " + ranking.get(i));
+            var entry = ranking.get(i);
+            String name = entry.getKey();
+            int score = entry.getValue();
+
+            JLabel player = new JLabel((i + 1) + ". " + name + " : " + score + "점");
             player.setAlignmentX(CENTER_ALIGNMENT);
             player.setForeground(Color.WHITE);
             player.setFont(new Font("SansSerif", Font.PLAIN, 18));
+
             add(Box.createVerticalStrut(10));
             add(player);
         }
@@ -56,7 +62,7 @@ public class GameOverPanel extends JPanel {
         
         exitBtn.addActionListener(e -> {
             try {
-                networkClient.close();   // <-- 기존 소켓 닫기
+                networkClient.close();   // 기존 소켓 닫기
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
@@ -68,5 +74,7 @@ public class GameOverPanel extends JPanel {
 
         add(Box.createVerticalStrut(30));
         add(exitBtn);
+        
+        add(Box.createVerticalGlue()); 
     }
 }
