@@ -81,7 +81,6 @@ public class GameLogic implements Runnable {
             }
             if (!isOverlapping) {
                 apple = potentialApple;
-                System.out.println("새 사과 생성: (" + x + ", " + y + ")");
                 break;
             }
         }
@@ -175,12 +174,8 @@ public class GameLogic implements Runnable {
             ClientHandler handler = playerHandlers.get(deadName);
             if (handler != null) {
                 handler.sendMessage("GAMEOVER");  // GAMEOVER 알림 전송
-                System.out.println(deadName + "에게 GAMEOVER 전송 완료");
-
                 handler.disconnect(); // 사망한 플레이어의 ClientHandler 소켓 즉시 종료
-         
                 removePlayer(deadName); // 목록에서 제거
-                System.out.println(deadName + " 제거됨 + 소켓 종료됨");
             }
         }   
     }
