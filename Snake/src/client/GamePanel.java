@@ -11,6 +11,7 @@ import java.awt.Insets;
 import java.awt.Point;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.util.HashMap;
 import java.util.List;
 
 import javax.swing.DefaultListModel;
@@ -33,6 +34,9 @@ public class GamePanel extends JPanel implements GameStateListener {
     private GameState lastState; 
     private final String myName;
     private final SidePanel sidePanel;
+    
+ // ✅ 게임 전체 동안의 점수를 누적해서 들고 있을 맵
+    private final java.util.Map<String, Integer> allScores = new java.util.HashMap<>();
 
     public GamePanel(ClientMain frame, NetworkClient networkClient,
                      GameState initialState, String myName) {
@@ -91,6 +95,22 @@ public class GamePanel extends JPanel implements GameStateListener {
         this.lastState = state;
         repaint();
 
+        
+        // ✅ 새로 받은 점수를 allScores에 누적 (없던 플레이어는 추가, 있던 플레이어는 갱신)
+        state.scores.forEach((name, score) -> {
+            allScores.put(name, score);
+        });
+
+        // ✅ 순위판도 state.scores 대신 누적 맵 기준으로 갱신
+        if (!allScores.isEmpty()) {
+            List<String> ranking = allScores.entrySet().stream()
+                    .sorted((a, b) -> b.getValue() - a.getValue())
+                    .map(e -> e.getKey() + " : " + e.getValue())
+                    .toList();
+
+            sidePanel.updateRanking(ranking);
+        }
+        /*
         if (!state.scores.isEmpty()) {
             List<String> ranking = state.scores.entrySet().stream()
                     .sorted((a, b) -> b.getValue() - a.getValue())
@@ -98,7 +118,7 @@ public class GamePanel extends JPanel implements GameStateListener {
                     .toList();
 
             sidePanel.updateRanking(ranking);
-        }
+        }*/
     }
 
     
@@ -113,6 +133,10 @@ public class GamePanel extends JPanel implements GameStateListener {
     public void onGameOver(GameState finalState) {
     	// 이 GamePanel을 리스너에서 제거
     	networkClient.removeListener(this);
+    	
+    	
+    	// ---- 점수 보정 추가 코드 ----
+    	finalState.scores = new java.util.HashMap<>(allScores);
     	
         SwingUtilities.invokeLater(() -> {
             ClientMain frame = (ClientMain) SwingUtilities.getWindowAncestor(this);
